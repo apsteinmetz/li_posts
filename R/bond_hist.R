@@ -57,8 +57,8 @@ sec_list <- c("DFEDTAR","DFEDTARL","INTDSRUSM193N","DGS2","DGS5","DGS10","DGS30"
 getSymbols(sec_list,src="FRED")
 # convert to tibbles
 
-# convert to monthly periodicity
-convert_xts <- function(sec){
+# convert to weekly periodicity
+xts_to_df <- function(sec){
    as_tibble(eval((parse(text=sec))),rownames="date") |>
       mutate(date = as.Date(date)) |>
       na.omit() |>
@@ -78,6 +78,25 @@ quick_dur <- Vectorize(function(yield,mat = 10){
 
 })
 
+# returns after yield curve inverts
+est_mo_return <- function(start_yield,end_yield, duration){
+  ret <- (start_yield - end_yield)/100 * duration +
+    start_yield/1200
+  return(ret)
+
+}
+
+# source("r/find_extremes.r")
+# extremes <- bind_rows(locate_xtrem(rates$TSY10,last = FALSE),
+#                       locate_xtrem(rates$TSY10,last = TRUE)) %>%
+#    arrange(Idx)
+#
+# extremes <- rates %>%
+#    select(year_month,Idx) %>%
+#    right_join(extremes,by = "Idx")
+
+
+# --------------------------------
 wrangle_rates <- function() {
   temp <- map(sec_list, convert_xts)
   rates <- temp[[1]]
@@ -102,24 +121,7 @@ wrangle_rates <- function() {
 }
 
 
-# source("r/find_extremes.r")
-# extremes <- bind_rows(locate_xtrem(rates$TSY10,last = FALSE),
-#                       locate_xtrem(rates$TSY10,last = TRUE)) %>%
-#    arrange(Idx)
-#
-# extremes <- rates %>%
-#    select(year_month,Idx) %>%
-#    right_join(extremes,by = "Idx")
 
-
-# --------------------------------
-# returns after yield curve inverts
-est_mo_return <- function(start_yield,end_yield, duration){
-   ret <- (start_yield - end_yield)/100 * duration +
-      start_yield/1200
-   return(ret)
-
-}
 # --------------------------------
 
 rates <-wrangle_rates()
