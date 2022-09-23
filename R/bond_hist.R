@@ -69,6 +69,19 @@ xts_to_df <- function(sec){
    }
 
 
+# approx period return
+approx_return <- Vectorize(
+  function(start_yield,
+                          end_yield,
+                          duration,
+                          hold_per = 1, #month
+                          px_only = FALSE){
+  ret <- (start_yield - end_yield)/100 * duration +
+    ifelse(px_only,0, start_yield/(1200*hold_per))
+  return(ret)
+
+})
+
 # duration
 quick_dur <- Vectorize(function(yield,mat = 10){
    bond.duration(settle = Sys.Date(),
@@ -78,13 +91,6 @@ quick_dur <- Vectorize(function(yield,mat = 10){
 
 })
 
-# returns after yield curve inverts
-est_mo_return <- function(start_yield,end_yield, duration){
-  ret <- (start_yield - end_yield)/100 * duration +
-    start_yield/1200
-  return(ret)
-
-}
 
 # source("r/find_extremes.r")
 # extremes <- bind_rows(locate_xtrem(rates$TSY10,last = FALSE),
@@ -98,7 +104,7 @@ est_mo_return <- function(start_yield,end_yield, duration){
 
 # --------------------------------
 wrangle_rates <- function() {
-  temp <- map(sec_list, convert_xts)
+  temp <- map(sec_list, xts_to_df)
   rates <- temp[[1]]
   for (n in 2:length(temp)) {
     rates <- full_join(rates, temp[[n]], by = "year_month")
@@ -130,7 +136,10 @@ bond_ret_shiller <- select(rename(shiller, year_month = date),
                            year_month, bondret)
 
 rates <- rates %>% mutate(bondret_est =
-                   est_mo_return(lag(TSY10),TSY10,lag(duration))) %>%
+                   approx_return(start_yield = lag(TSY10),
+                                 end_yield = TSY10,
+                                 duration = lag(duration),
+                                 px_only = FALSE)) %>%
    left_join(bond_ret_shiller)
 
 
@@ -138,6 +147,7 @@ rates <- rates %>% mutate(bondret_est =
 # iterate over various trade strategies
 TRIGGER = 0
 HOLD_PER = 6
+ANNUALIZE = TRUE
 
 # --------------------------------
 test_trade <- function(TRIGGER = 0, HOLD_PER  = 12,ANNUALIZE = TRUE) {
@@ -176,7 +186,7 @@ temp <- test_trade(TRIGGER=1,HOLD_PER = 6)
 
 
 
-grid_trade <- function(ANNUALIZE = TRUE) {
+grid_trade <- function(ANNUALIZE = FALSE) {
   results = list()
   for (hld in c(6, 12, 18, 24, 36)) {
     for (trg in c(1.00, .50, 0, -.50, -1.00)) {
@@ -187,7 +197,7 @@ grid_trade <- function(ANNUALIZE = TRUE) {
 }
 
 
-annualize = TRUE
+annualize = FALSE
 results <- grid_trade(ANNUALIZE = annualize)
 is_annl <- if_else(annualize,"Annualized","Unannualized")
 

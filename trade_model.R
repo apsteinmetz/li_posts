@@ -18,12 +18,16 @@ quick_dur <- Vectorize(function(yield,mat = 10){
 
 
 # approx period return
-approx_return <- function(start_yield,end_yield, duration){
+approx_return <- Vectorize(function(start_yield,
+                          end_yield,
+                          duration,
+                          hold_per = 1, #month
+                          px_only = FALSE){
   ret <- (start_yield - end_yield)/100 * duration +
-    start_yield/1200
+    ifelse(px_only,0, (start_yield/1200)*hold_per)
   return(ret)
 
-}
+})
 
 condense_time <- function(dt , pd = "week"){
   # assumes 'date' is name of date field
@@ -70,18 +74,23 @@ feature_set <- rates %>%
   )) %>%
   select(-starts_with("date_delta")) %>%
   mutate(dur_30 = quick_dur(TSY30, mat = 30)) %>%
-  mutate(pd_ret_30 = approx_return(lag(TSY30),TSY30,dur_30)) %>%
+  mutate(pd_ret_30 = approx_return(lag(TSY30),TSY30,dur_30,
+                                   hold_per = .25, # 1 week
+                                   px_only = TRUE)) %>%
   drop_na() %>%
   mutate(cumret = cumprod(1+pd_ret_30)) %>%
   mutate(trail_ret = cumret/lag(cumret,LAG)-1) %>%
   mutate(fut_ret = lead(cumret,HOLD_PER)/cumret-1) %>%
-  select(-pd_ret_30,-cumret)
+  select(-pd_ret_30,-cumret) %>%
+  identity()
 
+feature_set %>% ggplot(aes(TSY30,fut_ret)) + geom_point() +
+  scale_y_continuous(labels = scales::percent)
 
 threshold = 0.10 # we want 10%
 outcomes <- feature_set %>%
   transmute(date,fut_ret) %>%
-  mutate(winner = fut_ret < threshold)
+  mutate(winner = fut_ret > threshold)
 
 feature_set <- feature_set %>%
   select(-fut_ret)
