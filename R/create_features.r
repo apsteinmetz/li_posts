@@ -4,6 +4,7 @@ library(lubridate)
 library(quantmod)
 library(tidyquant)
 library(jrvFinance)
+library(timetk)
 
 
 # MAKE FEATURE SET --------------------------------------
@@ -84,22 +85,21 @@ feature_set <- rates %>%
                                    hold_per = .25, # 1 week
                                    px_only = TRUE)) %>%
   drop_na() %>%
-  mutate(cumret = cumprod(1+pd_ret_30)) %>%
-  mutate(trail_ret = cumret/lag(cumret,LAG)-1) %>%
-  mutate(fut_ret = lead(cumret,HOLD_PER)/cumret-1) %>%
-  select(-pd_ret_30,-cumret) %>%
   identity()
 
-feature_set %>% ggplot(aes(TSY30,fut_ret)) + geom_point() +
-  scale_y_continuous(labels = scales::percent) +
-  geom_smooth(method = "lm")
 
-threshold = 0.10 # we want 10%
-outcomes <- feature_set %>%
-  transmute(date,fut_ret) %>%
-  mutate(winner = fut_ret > threshold)
+# add things we might want to predict
+# create serial leads for 10-year leads
+outcome_set <- feature_set %>%
+  mutate(cumret = cumprod(1+pd_ret_30)) %>%
+  mutate(fut_ret = lead(cumret,HOLD_PER)/cumret-1) %>%
+  select(-pd_ret_30,-cumret) %>%
+  timetk::tk_augment_leads(TSY10,.lags = -round(c(1:6)*4)) %>%
+  select(date,TSY10,last_col(0:6)) %>% # we've added 7 features
+  mutate(across(contains("lead"),.fns = function(x) x - TSY10)) %>%
+  select(-TSY10) %>%
+  identity()
 
-feature_set <- feature_set %>%
-  select(-fut_ret)
 
 save(feature_set,file="data/feature_set.rdata")
+save(outcome_set,file="data/outcome_set.rdata")

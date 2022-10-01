@@ -1,0 +1,173 @@
+---
+title: "Thoughts on Rates: a Chart Pack, Fall 2022"
+author: "Art Steinmetz"
+format: html
+mainfont: Arial
+editor: visual
+execute: 
+   echo: false
+   warning: false
+   freeze: false
+---
+
+# Part Three:  Brass Tacks
+
+
+Problems: 
+Data leakage.  The inputs and outputs are highly serially correlated so the training set looks much like the test set even before stratifying.
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(lubridate)
+library(ggridges)
+
+
+
+# CREATE MODELS ----------------------------------
+load(file="data/feature_set.rdata")
+
+# chose actual_lvl variable
+term = "3 Month"
+feature_set <- feature_set %>% 
+  mutate(actual_lvl = TSY10_lead24-TSY10) %>% 
+  mutate(actual_class = as_factor(TSY10_lead24<TSY10)) %>% 
+  mutate(actual_class = forcats::fct_recode(actual_class,
+                                            lower = "TRUE",higher = "FALSE"))
+         
+
+chosen_features <- c(names(feature_set)[!str_detect(names(feature_set) ,"lead")],
+                     "actual_lvl","actual_class")
+# remove all but one actual_lvl variable
+feature_set2 <- feature_set %>% 
+  drop_na() %>% 
+  select(chosen_features) %>% 
+  select(-fut_ret,-dur_30) %>% 
+  select(-actual_class) %>% 
+  select(-date) %>% 
+  identity()
+
+#set.seed(4321)
+rates_split <- initial_time_split(feature_set2,prop = 0.97)
+rates_test <- testing(rates_split)
+rates_train <- training(rates_split)
+
+# test stratification
+rates_train %>% ggplot(aes(actual_lvl)) + 
+  geom_density() +
+  geom_density(data=rates_test,aes(actual_lvl),color = "red")
+```
+
+
+```{r}
+# linear regresssion
+lm_model <- linear_reg() %>% 
+  set_engine("lm")
+
+  
+
+lm_form_fit <- 
+  lm_model %>% 
+  fit(actual_lvl ~ ., data = rates_train)
+
+
+rates_test %>% bind_cols(predict(lm_form_fit,rates_test)) %>% 
+  ggplot(aes(actual_lvl,.pred)) + geom_point()
+```
+
+
+```{r random_forest}
+# random forest
+rf_model <- rand_forest(trees = 1000, min_n = 5) %>% 
+  set_engine("ranger",importance = "impurity") %>% 
+  set_mode("regression")
+
+
+rf_form_fit <- 
+  rf_model %>% 
+  fit(actual_lvl ~ ., data = rates_train)
+
+# plot predictions
+rates_test %>% 
+  bind_cols(predict(rf_form_fit,rates_test)) %>% 
+  ggplot(aes(actual_lvl,.pred)) + geom_point()
+```
+
+
+```{r}
+rf_form_fit$fit$variable.importance %>% 
+  enframe %>% 
+  arrange(value) %>% 
+  mutate(name = as_factor(name)) %>% 
+  ggplot(aes(name,value)) + geom_col() + 
+  coord_flip()
+```
+
+
+```{r xgboost}
+xg_model <- boost_tree(trees = 1000, min_n = 3) %>% 
+  set_engine("xgboost") %>% 
+  set_mode("regression")
+
+
+xg_form_fit <- 
+  xg_model %>% 
+  fit(actual_lvl ~ ., data = rates_train)
+
+# plot predictions
+rates_test %>% 
+  bind_cols(predict(xg_form_fit,rates_test)) %>% 
+  ggplot(aes(actual_lvl,.pred)) + geom_point()
+
+```
+
+
+```{r plot_predict}
+feature_set2 <- feature_set %>% 
+  filter(!is.na(trail_ret)) 
+
+pred <- predict(xg_form_fit,feature_set2) %>% 
+  bind_cols(feature_set2)  %>% 
+  pivot_longer(cols=c(".pred","actual_lvl"),names_to = 'type',values_to = 'Yld_Change')
+
+pred %>% 
+  slice_tail(n= 250) %>% 
+  ggplot(aes(date,Yld_Change,color=type)) + geom_line() + 
+  labs(title = "Out-of-Sample Stinks",
+       subtitle = glue::glue("Actual {term} Change in Yield vs. Predicted"),
+       color = "")
+
+```
+
+Lower our sights.  Try to just predict up or down.
+
+```{r predict xg class}
+# xgboost much better than random forest
+feature_set2 <- feature_set %>% 
+  drop_na() %>% 
+  select(chosen_features) %>% 
+  select(-fut_ret,dur_30) %>% 
+  select(-actual_lvl) %>% 
+  select(-date) %>% 
+  identity()
+rates_split <- initial_time_split(feature_set2,prop = 0.97)
+rates_test <- testing(rates_split)
+rates_train <- training(rates_split)
+
+xg_model <- boost_tree(trees = 1000, min_n = 3) %>% 
+  set_engine("xgboost") %>% 
+  set_mode("classification")
+
+xg_form_fit <- 
+  xg_model %>% 
+  fit(actual_class ~ ., data = rates_train)
+
+# predict xg
+results <- rates_test %>% 
+  bind_cols(predict(xg_form_fit,rates_test))
+
+conf_mat(results,truth = actual_class, estimate = .pred_class)
+```
+
+```{r}
+accuracy(results,truth = actual_class, estimate = .pred_class)
+```
