@@ -95,7 +95,7 @@ outcome_set <- feature_set %>%
   mutate(fut_ret = lead(cumret,HOLD_PER)/cumret-1) %>%
   select(-pd_ret_30,-cumret) %>%
   timetk::tk_augment_leads(TSY10,.lags = -round(c(1:6)*4)) %>%
-  select(date,TSY10,last_col(0:6)) %>% # we've added 7 features
+  select(date,TSY10,last_col(0:7)) %>% # we've added 7 features
   mutate(across(contains("lead"),.fns = function(x) x - TSY10)) %>%
   select(-TSY10) %>%
   identity()

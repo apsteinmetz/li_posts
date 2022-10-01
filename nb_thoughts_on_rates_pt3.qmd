@@ -10,16 +10,16 @@ execute:
    freeze: false
 ---
 
-# Part Three:  Brass Tacks
+# Part Three: Brass Tacks
 
+Problems: Data leakage. The inputs and outputs are highly serially correlated so the training set looks much like the test set even before stratifying.
 
-Problems: 
-Data leakage.  The inputs and outputs are highly serially correlated so the training set looks much like the test set even before stratifying.
 ```{r}
 library(tidyverse)
 library(tidymodels)
 library(lubridate)
 library(ggridges)
+library(grid)
 
 
 
@@ -51,7 +51,6 @@ rates_train %>% ggplot(aes(actual_change)) +
   geom_density(data=rates_test,aes(actual_change),color = "red")
 ```
 
-
 ```{r}
 # linear regresssion
 lm_model <- linear_reg() %>% 
@@ -67,7 +66,6 @@ lm_form_fit <-
 rates_test %>% bind_cols(predict(lm_form_fit,rates_test)) %>% 
   ggplot(aes(actual_change,.pred)) + geom_point()
 ```
-
 
 ```{r random_forest}
 # random forest
@@ -86,7 +84,6 @@ rates_test %>%
   ggplot(aes(actual_change,.pred)) + geom_point()
 ```
 
-
 ```{r}
 rf_form_fit$fit$variable.importance %>% 
   enframe %>% 
@@ -95,7 +92,6 @@ rf_form_fit$fit$variable.importance %>%
   ggplot(aes(name,value)) + geom_col() + 
   coord_flip()
 ```
-
 
 ```{r xgboost}
 xg_model <- boost_tree(trees = 1000, min_n = 3) %>% 
@@ -114,7 +110,6 @@ rates_test %>%
 
 ```
 
-
 ```{r plot_predict}
 feature_set2 <- feature_set
 
@@ -130,7 +125,7 @@ pred %>%
 
 ```
 
-Lower our sights.  Try to just predict up or down.
+Lower our sights. Try to just predict up or down.
 
 ```{r predict xg class}
 # xgboost much better than random forest
@@ -163,6 +158,7 @@ conf_mat(results,truth = actual_class, estimate = .pred_class)
 ```{r}
 accuracy(results,truth = actual_class, estimate = .pred_class)
 ```
+
 ```{r predict rf class}
 # xgboost much better than random forest
 feature_set2 <- feature_set %>% 
@@ -190,9 +186,11 @@ results <- rates_test %>%
 conf_mat(results,truth = actual_class, estimate = .pred_class)
 # rates_test %>% group_by(actual_class) %>% count()
 ```
+
 ```{r}
 accuracy(results,truth = actual_class, estimate = .pred_class)
 ```
+
 ```{r slope tiggers}
 load(file="data/feature_set.rdata")
 # chose actual_change variable
@@ -203,7 +201,7 @@ outcome_set <- feature_set %>%
   pivot_longer(cols = contains("lead"),names_to = "lead",values_to = "change") %>% 
   mutate(lead = as_factor(lead))
 
-levels(outcome_set$lead) <- c("Next Mo","Next 3 Mo","Next 6 Mo","Next Year")
+levels(outcome_set$lead) <- c("Next Mo.","Next 3 Mo.","Next 6 Mo.","Next 12 Mo.")
 
 
 slope_outcomes <- outcome_set %>% 
@@ -216,7 +214,17 @@ slope_outcomes %>%
   geom_density_ridges_gradient(scale = 2) +
 #  scale_x_continuous(labels = scales::percent) +
   facet_wrap(~lead,scales = "fixed") +
-  scale_fill_viridis_c(name = "Yld Change", option = "C")
+  coord_cartesian(xlim = c(-3,5)) +
+  scale_x_continuous(breaks = -3:5) +
+  scale_fill_viridis_c(name = "Yld Change", option = "C") +
+  labs(title = "Purple Mountains' Majesty",
+       subtitle= "Range of Returns for Different Entry Points and Holding Periods",
+       x = "10-Year Treasury Yield Change (Percentage Points)",
+       y = "Trade Entry Curve Slope")
+
+arrow <- magick::image_read("data/red_arrow.png")
+grid.raster(arrow,width = .1,x=.4,y=.30)
+
 ```
 
 ```{r}
@@ -230,10 +238,16 @@ summary_outcomes <- slope_outcomes %>%
 
 summary_outcomes %>% arrange(median_change)
 ```
+
 ```{r}
 summary_outcomes %>% 
-  ggplot(aes(slope_ranges,lead,fill = median_change))  + geom_tile() + 
+  filter(slope_ranges != "(-3,-2.5]") %>% 
+  ggplot(aes(lead,slope_ranges,fill = median_change))  + geom_tile() + 
   theme_minimal() +
-  scale_fill_viridis_c(name = "Yld Change", option = "C")
-```
+  scale_fill_viridis_c(name = "Yield\nChange", option = "C") + 
+  labs(title = "Purple Mountains' Majesty",
+       subtitle= "Range of Returns for Different Entry Points and Holding Periods",
+       x = "Holding Period",
+       y = "Trade Entry Curve Slope")
 
+```
