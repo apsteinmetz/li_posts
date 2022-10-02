@@ -1,0 +1,16 @@
+---
+title: "Thoughts on Rates. Autumn 2022"
+author: "Arthur Steinmetz"
+---
+
+The tabs above ares a rollup of three [LinkedIn](https://www.linkedin.com/in/asteinmetz/) posts. The originals are here:
+
+[Part 1](https://www.linkedin.com/pulse/thoughts-rates-chart-pack-fall-2022-part-one-arthur-steinmetz/)
+
+[Part 2](https://www.linkedin.com/pulse/thoughts-rates-chart-pack-fall-2022-part-2-arthur-steinmetz/)
+
+[Part 3](https://www.linkedin.com/pulse/thoughts-rates-chart-pack-fall-2022-part-3-arthur-steinmetz/)
+
+This website was built with Quarto by Posit (formerly RStudio)
+
+To learn more about Quarto websites visit <https://quarto.org/docs/websites>.

@@ -1,5 +1,5 @@
 ---
-title: "Thoughts on Rates: a Chart Pack, Fall 2022"
+title: "Part Two"
 author: "Art Steinmetz"
 format: html
 mainfont: Arial
@@ -7,7 +7,7 @@ editor: visual
 execute: 
    echo: false
    warning: false
-   freeze: false
+   freeze: true
 ---
 
 # Part Two: Much More Pain

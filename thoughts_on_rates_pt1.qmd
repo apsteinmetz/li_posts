@@ -1,12 +1,12 @@
 ---
-title: "Thoughts on Rates: a Chart Pack, Fall 2022"
+title: "Part One"
 author: "Art Steinmetz"
 format: html
 editor: visual
 execute: 
    echo: false
    warning: false
-   freeze: false
+   freeze: true
 ---
 
 # Part One: More Than Meets The Eye

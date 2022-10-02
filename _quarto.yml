@@ -1,0 +1,22 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "Thoughts on Rates. Autumn 2022"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - thoughts_on_rates_pt1.qmd
+      - thoughts_on_rates_pt2.qmd
+      - thoughts_on_rates_pt3.qmd
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+
+
+
