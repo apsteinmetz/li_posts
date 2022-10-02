@@ -18,8 +18,6 @@ library(lubridate)
 library(ggridges)
 library(grid)
 
-
-
 # CREATE MODELS ----------------------------------
 load(file="data/feature_set.rdata")
 #load(file="data/outcome_set.rdata")

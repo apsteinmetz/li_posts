@@ -46,7 +46,6 @@ quick_dur <- Vectorize(function(yield,mat = 10){
                  yield = yield/100)
 
 })
-
 ```
 
 ## What Will Happen.
