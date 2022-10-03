@@ -10,7 +10,7 @@ execute:
    freeze: true
 ---
 
-# Part Two: Much More Pain
+# Much More Pain
 
 ```{r}
 #| warning: false

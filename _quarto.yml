@@ -8,9 +8,9 @@ website:
     left:
       - href: index.qmd
         text: Home
-      - thoughts_on_rates_pt1.qmd
-      - thoughts_on_rates_pt2.qmd
-      - thoughts_on_rates_pt3.qmd
+      - thoughts_pt1.qmd
+      - thoughts_pt2.qmd
+      - thoughts_pt3.qmd
 
 format:
   html:
