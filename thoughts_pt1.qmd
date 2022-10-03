@@ -6,7 +6,6 @@ editor: visual
 execute: 
    echo: false
    warning: false
-   freeze: true
 ---
 
 # More Than Meets The Eye

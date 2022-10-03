@@ -7,7 +7,6 @@ editor: visual
 execute: 
    echo: false
    warning: false
-   freeze: true
 ---
 
 # Much More Pain

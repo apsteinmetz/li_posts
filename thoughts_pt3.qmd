@@ -6,7 +6,6 @@ mainfont: Arial
 execute: 
    echo: false
    warning: false
-   freeze: true
 ---
 
 # A Trading Rule (Maybe)
@@ -55,7 +54,7 @@ rates_train <- training(rates_split)
 
 It has become fashionable in the last decade to put a lot of faith in crowd-sourced forecasting. Of course, asset market prices do exactly that and have done so for centuries, millennia, even. Are those forecasts any good? In the main, no. I always enjoy charts that show the evolution of market-implied forecasts because they show the perils of predicting the future. Predicting the evolution of the Federal Funds rate is a current example. Markets continue to undershoot the pace and level of the rising Funds rate. Just a month ago the forecast terminal Funds rate was 100 BP below where it stands today. In the chart below we see the current implied path of the Fed Funds rate today and one month ago. The market thinks the Funds rate will peak at 4.5% next March and decline from there.
 
-![Source: Atlanta Fed](thoughts_on_rates_pt3_files/figure-html/implied_funds.jpg)
+![Source: Atlanta Fed](data/Atlanta_Fed.jpg)
 
 This seems overly optimistic to me. As a rule of thumb, two percent real rates in an environment of long-run inflation of, also, two percent is pretty reasonable. In other words, a four percent nominal cost of money. Alas, a gradual approach, leveling off at this new equilibrium, is unrealistic when inflation is running at nine percent. You've heard me talk about anchoring and hindsight bias before and it is vividly illustrated by market expectations now. We might get to a four percent funds rate but it will be on the way down from something higher than 4.5%. I don't know the exact level but it will have to get higher than long-term bond yields, as you've heard me say before.
 
