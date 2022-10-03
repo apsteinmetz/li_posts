@@ -1,6 +1,5 @@
 ---
 title: "Part Two"
-author: "Art Steinmetz"
 format: html
 mainfont: Arial
 editor: visual

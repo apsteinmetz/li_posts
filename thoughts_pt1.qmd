@@ -1,6 +1,5 @@
 ---
 title: "Part One"
-author: "Art Steinmetz"
 format: html
 editor: visual
 execute: 
